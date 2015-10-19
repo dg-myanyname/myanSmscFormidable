@@ -1,7 +1,7 @@
 <?php
 // SMSC.RU API (smsc.ru) версия 3.4 (05.03.2015)
 
-define("SMSC_LOGIN", "web_black_sea");			// логин клиента
+//define("SMSC_LOGIN", "web_black_sea");			// логин клиента
 //define("SMSC_PASSWORD", "9abb74ca0762fcb6cdd76e034018f5b1");	// пароль или MD5-хеш пароля в нижнем регистре
 define("SMSC_POST", 0);					// использовать метод POST
 define("SMSC_HTTPS", 0);				// использовать HTTPS протокол

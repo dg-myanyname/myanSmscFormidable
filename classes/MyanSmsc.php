@@ -5,46 +5,85 @@
 */
 class MyanSmsc
 {
-	public static $plugin_file = NULL,
-			$plugin_dir = NULL,
+	public static 
 			$plugin_path = NULL,
-			$plugin_url = NULL,
-			$forms_ids = array(),
-			$add_script = false;
+			$option_group = 'myan-smsc-options';
+			/*$plugin_file = NULL,
+			$plugin_dir = NULL,
+			$plugin_url = NULL,;*/
 	
 	function __construct($file)
 	{	
-		self::$plugin_file = $file;
 		self::$plugin_path = plugin_dir_path($file);
+		/*self::$plugin_file = $file;
 		self::$plugin_dir = plugin_basename(self::$plugin_path);
-		self::$plugin_url = plugins_url('', self::$plugin_file);
+		self::$plugin_url = plugins_url('', self::$plugin_file);*/
+		
+		if(is_admin()){
+			add_action( 'admin_menu', array(__CLASS__, 'register_myan_smsc_menu_page') );
+			add_action( 'admin_init', array(__CLASS__,'register_myan_smsc_setting') );
+		}
 		
 		include_once self::$plugin_path . "assets/smsc_api.php";
-		
-		add_action('frm_registered_form_actions', array(__CLASS__, 'register_myan_smsc_action'));
-		//add_action('frm_trigger_myan_smsc_action_name_create_action', array(__CLASS__, 'myan_smsc_action_create_trigger'), 10, 3);
+		define("SMSC_LOGIN", get_option('myan-smsc-login'));
+		define("SMSC_PASSWORD", get_option('myan-smsc-pass'));
+		define("SMSC_MYAN_PHONE", get_option('myan-smsc-phone'));
+		include_once self::$plugin_path . "classes/MyanSmscFormidable.php";
+		$myanSmsc = new MyanSmscFormidable(self::$plugin_path);
+		echo '<pre>SMSC_LOGIN = '.htmlspecialchars(print_r(SMSC_LOGIN, true)).'</pre>';
+		echo '<pre>SMSC_PASSWORD = '.htmlspecialchars(print_r(SMSC_PASSWORD, true)).'</pre>';
+		echo '<pre>SMSC_MYAN_PHONE = '.htmlspecialchars(print_r(SMSC_MYAN_PHONE, true)).'</pre>';
 	}
 
-	function register_myan_smsc_action( $actions )
+	public function register_myan_smsc_menu_page()
 	{
-	    $actions['myan_smsc_action_name'] = 'MyanSmscFormidable';
-	    include_once(self::$plugin_path . 'classes/MyanSmscFormidable.php');
-	    return $actions;
+		add_menu_page( 'Myan smsc options', 'Myan smsc', 'manage_options', self::$option_group, array( __CLASS__,'myan_smsc_menu_page'));
 	}
-	
-	function myan_smsc_action_create_trigger($action, $entry, $form) {
-		$sms_body = $action->post_content['sms_body'];
-		$frm_fields_values = $entry->metas;
-		//wp_mail( 'dg@myanyname.com', 'The subject', 'The message' );
-		preg_match_all('/\[(\d.)\]/', $sms_body, $fields_ids);
-		if(!count($fields_ids[1]))
-			return;
-		foreach ($fields_ids[1] as $fields_id) {
-			$preg = '/\['.$fields_id.'\]/';
-			$sms_body = preg_replace($preg, $frm_fields_values[$fields_id], $sms_body);
-		}
-		echo '<pre>$sms_body = '.htmlspecialchars(print_r($sms_body, true)).'</pre>';
-		//list($sms_id, $sms_cnt, $cost, $balance) = send_sms("380936253140", $sms_body);
+
+	public function myan_smsc_menu_page()
+	{ ?>
+		<div class="wrap">
+		<h2>Myan smsc options</h2>
+
+		<form method="post" action="options.php">
+		    <?php settings_fields( self::$option_group ); ?>
+		    <?php do_settings_sections( self::$option_group ); ?>
+		    <table class="form-table">
+		        <tr valign="top">
+					<th scope="row">Номер телефона</th>
+		        	<td>
+		        		<input type="text" name="myan-smsc-phone" value="<?php echo esc_attr( get_option('myan-smsc-phone') ); ?>" />
+		        	</td>
+		        </tr>
+		         
+		        <tr valign="top">
+					<th scope="row">Smsc логин</th>
+					<td>
+						<input type="text" name="myan-smsc-login" value="<?php echo esc_attr( get_option('myan-smsc-login') ); ?>" />
+					</td>
+		        </tr>
+		        
+		        <tr valign="top">
+					<th scope="row">Smsc пароль (или MD5-хеш пароля в нижнем регистре)</th>
+					<td>
+						<input type="text" name="myan-smsc-pass" value="<?php echo esc_attr( get_option('myan-smsc-pass') ); ?>" size="35" />
+					</td>
+		        </tr>
+		    </table>
+		    
+		    <?php submit_button(); ?>
+
+		</form>
+		</div>
+	<?php
 	}
+
+	public function register_myan_smsc_setting()
+	{
+		register_setting( self::$option_group, 'myan-smsc-phone' );
+		register_setting( self::$option_group, 'myan-smsc-login' );
+		register_setting( self::$option_group, 'myan-smsc-pass' );
+	}
+
 }
 ?>

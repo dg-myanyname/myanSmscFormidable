@@ -1,55 +1,37 @@
 <?php
-
-class MyanSmscFormidable extends FrmFormAction {
-
-	function __construct() {
-		$action_ops = array(
-		    'classes'   => 'myan_sms',
-		    'limit'     => 99,
-		    'active'    => true,
-		    'priority'  => 50,
-		);
-		
-	    $this->FrmFormAction('myan_smsc_action_name', __('Myan smsc', 'formidable'), $action_ops);
+/**
+* 
+*/
+class MyanSmscFormidable
+{
+	public static $plugin_path = NULL;
+	
+	function __construct($plugin_path)
+	{
+		self::$plugin_path = $plugin_path;
+		add_action('frm_registered_form_actions', array(__CLASS__, 'register_myan_smsc_frm_action'));
+		add_action('frm_trigger_myan_smsc_action_name_create_action', array(__CLASS__, 'myan_smsc_action_create_frm_trigger'), 10, 3);
 	}
 
-	/**
-	* Get the HTML for your action settings
-	*/
-	function form( $form_action, $args = array() ) {
-	    extract($args);
-	    $action_control = $this; ?>
-
-	    <table class="form-table frm-no-margin">
-	    <tbody>
-	    <tr>
-		    <th>
-			    <label>Номер получателя</label>
-		    </th>
-		    <td>
-		    	<input type="text" class="large-text" value="<?php echo esc_attr($form_action->post_content['reciepient_number']); ?>" name="<?php echo $action_control->get_field_name('reciepient_number') ?>">
-		    </td>
-	    </tr>
-	    <tr>
-		    <th>
-		    	<label>Сообщение></label>
-		    </th>
-		    <td>
-		    	<textarea class="large-text" rows="5" cols="50" name="<?php echo $action_control->get_field_name('sms_body') ?>"><?php echo esc_attr($form_action->post_content['sms_body']); ?></textarea>
-		    </td>
-	    </tr>
-	    </tbody>
-	    </table>
-	    <?php
-
-	    // If you have scripts to include, you can include theme here
-
+	function register_myan_smsc_frm_action( $actions )
+	{
+	    $actions['myan_smsc_action_name'] = 'MyanSmscFormidableAction';
+	    include_once(self::$plugin_path . 'classes/MyanSmscFormidableAction.php');
+	    return $actions;
 	}
+	
+	function myan_smsc_action_create_frm_trigger($action, $entry, $form) {
+		$sms_body = $action->post_content['sms_body_template'];
+		$frm_fields_values = $entry->metas;
+		preg_match_all('/\[(\d.)\]/', $sms_body, $field_ids);
+		if(!count($field_ids[1]))
+			return;
+		foreach ($field_ids[1] as $field_id) {
+			$preg = '/\['.$field_id.'\]/';
+			$sms_body = preg_replace($preg, $frm_fields_values[$field_id], $sms_body);
+		}
+		//echo '<pre>$sms_body = '.htmlspecialchars(print_r($sms_body, true)).'</pre>';
+		//list($sms_id, $sms_cnt, $cost, $balance) = send_sms(SMSC_MYAN_PHONE, $sms_body);
 
-	function get_defaults() {
-	    return array(
-            'reciepient_number'	=> '',
-            'sms_body'			=> '',
-        );
 	}
 }
