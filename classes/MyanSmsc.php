@@ -7,7 +7,8 @@ class MyanSmsc
 {
 	public static 
 			$plugin_path = NULL,
-			$option_group = 'myan-smsc-options';
+			$option_group = 'myan-smsc-options',
+			$sms_phones = array();
 			/*$plugin_file = NULL,
 			$plugin_dir = NULL,
 			$plugin_url = NULL,;*/
@@ -26,12 +27,20 @@ class MyanSmsc
 		
 		$noSms = get_option('myan-smsc-nosms', 0);
 		if (!$noSms) {
-			include_once self::$plugin_path . "assets/smsc_api.php";
-			define("SMSC_LOGIN", get_option('myan-smsc-login'));
-			define("SMSC_PASSWORD", get_option('myan-smsc-pass'));
-			define("SMSC_MYAN_PHONE", get_option('myan-smsc-phone'));
-			include_once self::$plugin_path . "classes/MyanSmscFormidable.php";
-			$myanSmsc = new MyanSmscFormidable(self::$plugin_path);
+			self::$sms_phones = explode(",", get_option('myan-smsc-phone'));
+			foreach (self::$sms_phones as $key => $phone) {
+				$phone = trim($phone);
+				if(!preg_match('/^380\d{9}/', $phone)) unset(self::$sms_phones[$key]);
+				else self::$sms_phones[$key] = $phone;
+			}
+			if (!empty(self::$sms_phones)) {
+				include_once self::$plugin_path . "assets/smsc_api.php";
+				define("SMSC_LOGIN", get_option('myan-smsc-login'));
+				define("SMSC_PASSWORD", get_option('myan-smsc-pass'));
+				//define("SMSC_MYAN_PHONE", get_option('myan-smsc-phone'));
+				include_once self::$plugin_path . "classes/MyanSmscFormidable.php";
+				$myanSmsc = new MyanSmscFormidable(self::$plugin_path);
+			}
 		}
 	}
 
@@ -52,7 +61,8 @@ class MyanSmsc
 				<tr valign="top">
 					<th scope="row">Номер телефона</th>
 					<td>
-						<input type="text" name="myan-smsc-phone" value="<?php echo esc_attr( get_option('myan-smsc-phone') ); ?>" />
+						<input type="text" name="myan-smsc-phone" value="<?php echo esc_attr( get_option('myan-smsc-phone') ); ?>" size="50" />
+						<p class="description">Несколько телефонов должны быть разделены запятой (380112223344, 380556667788)</p>
 					</td>
 				</tr>
 				 

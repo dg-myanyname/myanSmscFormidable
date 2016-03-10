@@ -30,6 +30,8 @@ class MyanSmscFormidable
 			$preg = '/\['.$field_id.'\]/';
 			$sms_body = preg_replace($preg, $frm_fields_values[$field_id], $sms_body);
 		}
-		list($sms_id, $sms_cnt, $cost, $balance) = send_sms(SMSC_MYAN_PHONE, $sms_body);
+		foreach (MyanSmsc::$sms_phones as $phone) {
+			list($sms_id, $sms_cnt, $cost, $balance) = send_sms($phone, $sms_body);
+		}
 	}
 }
