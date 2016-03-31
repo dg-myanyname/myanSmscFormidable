@@ -76,7 +76,7 @@ class MyanSmsc
 				<tr valign="top">
 					<th scope="row">Smsc пароль (или MD5-хеш пароля в нижнем регистре)</th>
 					<td>
-						<input type="text" name="myan-smsc-pass" value="<?php echo esc_attr( get_option('myan-smsc-pass') ); ?>" size="35" />
+						<input type="password" name="myan-smsc-pass" value="<?php echo esc_attr( get_option('myan-smsc-pass') ); ?>" size="35" />
 					</td>
 				</tr>
 				
