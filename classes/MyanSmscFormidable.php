@@ -23,13 +23,17 @@ class MyanSmscFormidable
 	function myan_smsc_action_create_frm_trigger($action, $entry, $form) {
 		$sms_body = $action->post_content['sms_body_template'];
 		$frm_fields_values = $entry->metas;
+		// найдем в теле сообщения шорткоды полей (например [39])
 		preg_match_all('/\[(\d.)\]/', $sms_body, $field_ids);
-		if(!count($field_ids[1]))
-			return;
-		foreach ($field_ids[1] as $field_id) {
-			$preg = '/\['.$field_id.'\]/';
-			$sms_body = preg_replace($preg, $frm_fields_values[$field_id], $sms_body);
+		// если нашли шорткоды
+		if(count($field_ids[1])){
+			foreach ($field_ids[1] as $field_id) {
+				$preg = '/\['.$field_id.'\]/';
+				// заменим шорткоды на соответствующие значения
+				$sms_body = preg_replace($preg, $frm_fields_values[$field_id], $sms_body);
+			}
 		}
+		// отправляем смс на каждый номер, указанный в админке
 		foreach (MyanSmsc::$sms_phones as $phone) {
 			list($sms_id, $sms_cnt, $cost, $balance) = send_sms($phone, $sms_body);
 		}
