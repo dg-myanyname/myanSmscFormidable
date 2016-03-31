@@ -8,7 +8,8 @@ class MyanSmsc
 	public static 
 			$plugin_path = NULL,
 			$option_group = 'myan-smsc-options',
-			$sms_phones = array();
+			$sms_phones = array(),
+			$noSms = false;
 			/*$plugin_file = NULL,
 			$plugin_dir = NULL,
 			$plugin_url = NULL,;*/
@@ -25,23 +26,14 @@ class MyanSmsc
 			add_action( 'admin_init', array(__CLASS__,'register_myan_smsc_setting') );
 		}
 		
-		$noSms = get_option('myan-smsc-nosms', 0);
-		if (!$noSms) {
-			self::$sms_phones = explode(",", get_option('myan-smsc-phone'));
-			foreach (self::$sms_phones as $key => $phone) {
-				$phone = trim($phone);
-				if(!preg_match('/^380\d{9}/', $phone)) unset(self::$sms_phones[$key]);
-				else self::$sms_phones[$key] = $phone;
-			}
-			if (!empty(self::$sms_phones)) {
-				include_once self::$plugin_path . "assets/smsc_api.php";
-				define("SMSC_LOGIN", get_option('myan-smsc-login'));
-				define("SMSC_PASSWORD", get_option('myan-smsc-pass'));
-				//define("SMSC_MYAN_PHONE", get_option('myan-smsc-phone'));
-				include_once self::$plugin_path . "classes/MyanSmscFormidable.php";
-				$myanSmsc = new MyanSmscFormidable(self::$plugin_path);
-			}
-		}
+		self::$noSms = get_option('myan-smsc-nosms', 0);
+			
+		define("SMSC_LOGIN", get_option('myan-smsc-login'));
+		define("SMSC_PASSWORD", get_option('myan-smsc-pass'));
+		include_once self::$plugin_path . "classes/MyanSmscFormidable.php";
+		include_once self::$plugin_path . "assets/smsc_api.php";
+		$myanSmsc = new MyanSmscFormidable(self::$plugin_path);
+		self::$sms_phones = self::csv_phones_to_array(get_option('myan-smsc-phone'));
 	}
 
 	public function register_myan_smsc_menu_page()
@@ -101,6 +93,16 @@ class MyanSmsc
 		register_setting( self::$option_group, 'myan-smsc-login' );
 		register_setting( self::$option_group, 'myan-smsc-pass' );
 		register_setting( self::$option_group, 'myan-smsc-nosms' );
+	}
+
+	public function csv_phones_to_array($csv_phones){
+		$array_phones = explode(",", $csv_phones);
+		foreach ($array_phones as $key => $phone) {
+			$phone = trim($phone);
+			if(!preg_match('/^380\d{9}/', $phone)) unset($array_phones[$key]);
+			else $array_phones[$key] = $phone;
+		}
+		return count($array_phones) ? $array_phones : false;
 	}
 }
 ?>
